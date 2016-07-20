@@ -1,0 +1,53 @@
+<html>
+
+<head>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+</head>
+
+<body>
+    Testing for abhi
+
+    <input id="command_box">
+    <button id="send_button">Send</button>
+    <div id="information"></div>
+
+
+
+    <script>
+        fisnar_write = "http://25.141.108.197:8002/writecf/"
+        fisnar_read = "http://25.141.108.197:8002/read/"
+
+        $("#send_button").click(
+            function() {
+                value = $("#command_box").val()
+
+                $.get(fisnar_write + value)
+
+
+            }
+        )
+
+
+        setInterval(
+                function() {
+
+                    $.get(fisnar_write+"PX",
+                          function(data)
+                          {
+                        console.log(data)
+
+                    $.get(fisnar_read,
+                        function(data) {
+                        data=data.split("\n")
+                        l = data.length
+                        out = ""
+                        for (i = l-4;i<l;i++) out+=data[i]
+                        $("#information").html(out)})
+                        })},1000)
+
+    </script>
+
+</body>
+
+
+</html>
