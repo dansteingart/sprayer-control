@@ -1,0 +1,25 @@
+html {
+    background: lightblue;
+
+}
+
+body {
+    background-color: whitesmoke;
+    box-shadow: 0 0 2px darkslategray;
+    color: darkslategray;
+    font-family: "Trebuchet MS", Helvetica, sans-serif;
+    font-size: 12px;
+    line-height: 200%;
+    margin: 50 auto;
+    max-width: 500px;
+    padding: 2em 2em 2em;
+}
+
+h1,h2,h3 {
+    font-size: 16px;
+}
+
+.button {
+    font-family: "Trebuchet MS", Helvetica, sans-serif;
+    font-size: 12px;
+}

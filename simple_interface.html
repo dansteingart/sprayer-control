@@ -1,53 +1,192 @@
 <html>
 
 <head>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js">
+    </script>
+    <link rel="stylesheet" href="main.css">
 </head>
 
 <body>
-    Testing for abhi
-
-    <input id="command_box">
-    <button id="send_button">Send</button>
-    <div id="information"></div>
-
-
+    <h1>Ultimus</h1>
+    <input id = "toggle" type="checkbox">Dispense<br /><br />
+    <hr>
+    <h1>Syringe pump</h1>
+    <input id="syrFOR"name="direction"type="radio">Forward<br />
+    <input id="syrREV"name="direction"type="radio">Reverse<br />
+    <span title="Diameter in 'val' mm. val is a number between 0.1 and 50."><input id="syrDIA_input" size="2"></span>
+    <button class="button"id="syrDIA">Set syringe diameter</button><br />
+    <span title="Rate in 'val units'. val is a number between 0 and 1000. units must be 'NS', 'UM', 'MM', 'UH', or 'MH'"><input id="syrSPD_input" size="2"></span>
+    <button class="button"id="syrRTE">Set pumping rate</button><br /><br />
+    <button class="button"id="syrRUN">Run</button>
+    <button class="button"id="syrSTP">Stop</button><br /><br />
+    <div id="syrSTAT"></div><br />
+    <hr>
+        
+    <h1>Fisnar</h1>
+    <span title="Valid commands: MA x,y,z: move to absolute position. SP s: set speed to s."><input id="fisCOM"></span>
+    <button class="button"id="fisSND">Send</button><br />
+    <div id="prevsend"></div><br />
+    <input class="button"type="file">
+    <button class="button"id="execute">Execute</button><br /><br />
+    <div id="infox"></div><div id="infoy"></div><div id="infoz"></div>
+    <div id="test"></div>
 
     <script>
-        fisnar_write = "http://25.141.108.197:8002/writecf/"
-        fisnar_read = "http://25.141.108.197:8002/read/"
-
-        $("#send_button").click(
-            function() {
-                value = $("#command_box").val()
-
-                $.get(fisnar_write + value)
-
-
+    
+        //alert("Don't use arrow keys while typing. Also don't hit the arrow keys too quickly in succession. If you want to use your own recipe, copy it into the same directory as this .html file.\n\nCommands to type in:\n\nKeyboard commands:\nArrow keys- move Fisnar in x/y \nPage up/down- adjust z height \nHome- center \nEnd- stop movement \nCTRL- eventually will map to Ultimus toggle \nINS- speed at 5 mm/s \nDEL- speed at 25 mm/s")
+        
+        ultimus_write = "http://25.141.108.197:8001/";
+        syrpump_write = "http://25.141.108.197:8002/writecf/"
+        fisnar_write  = "http://25.141.108.197:8003/writecf/";
+        fisnar_read   = "http://25.141.108.197:8003/read/";
+        
+        //THE FOLLOWING ARE ULTIMUS COMMANDS
+        $("#toggle").click(function() {
+            //alert("fix me!")
+            sum = '%0204DI  %cf%03';
+            $.get(ultimus_write + '%05');
+            $.get(ultimus_write + sum);
+        });
+        
+        //THE FOLLOWING ARE SYRINGE PUMP COMMANDS
+        $("#syrFOR").click(function() {
+            $.get(syrpump_write + 'DIR INF');
+            $("#syrSTAT").html("Syringe pump is set to forward!");
+        });
+        $("#syrREV").click(function() {
+            $.get(syrpump_write + 'DIR WDR');
+            $("#syrSTAT").html("Syringe pump is set to reverse!");
+        });
+        $("#syrDIA").click(function() {
+            $.get(syrpump_write + 'DIR INF');
+            $("#syrSTAT").html("Syringe pump is set to forward!");
+        });
+        $("#syrREV").click(function() {
+            $.get(syrpump_write + 'DIR WDR');
+            $("#syrSTAT").html("Syringe pump is set to reverse!");
+        });
+        $("#syrRUN").click(function() {
+            $.get(syrpump_write + 'RUN');
+            $("#syrSTAT").html("Syringe pump is running!");
+        });
+        $("#syrSTP").click(function() {
+            $.get(syrpump_write + 'STP');
+            $("#syrSTAT").html("Syringe pump is stopped!");
+        });
+        
+        $("#syrSTAT").html("Syringe pump is...")
+        
+        //THE FOLLOWING ARE FISNAR COMMANDS
+        var prevsend = [];
+        $("#prevsend").html("Previously sent:\n" + prevsend) //lists previously sent commands
+        $("#fisSND").click(function() {
+            value = $("#fisCOM").val()
+            $.get(fisnar_write + value)
+            prevsend.push("\n" + value)
+            $("#prevsend").html("Previously sent:\n" + prevsend)
+            document.getElementById("fisCOM").value = ""
+        }) //sends command typed into input box
+        $("#execute").click(function() {
+            $("#test").html("Just keep swimming.");
+            $.get($('input[type=file]').val().replace(/C:\\fakepath\\/i, ''), function(data) {
+                commands = data.split('\n');
+                for (i=0;i<commands.length;i++) {
+                    $.get(fisnar_write + commands[i])
+                }
+            });
+        }); //sends recipe file selected by user
+        var current_x, current_y, current_z;
+        setInterval(function() {
+            $.get(fisnar_write+"PX");
+            $.get(fisnar_write+"PY");
+            $.get(fisnar_write+"PZ");
+            $.get(fisnar_read, function(data) {
+                data=data.replace(/ok!/g,"");
+                data=data.split("\n");
+                l = data.length;
+                var out = [];
+                for (i = l-10;i<l;i++) {
+                    out.push(data[i]);
+                }
+                current_x = Number(out[0]);
+                current_y = Number(out[3]);
+                current_z = Number(out[6]);
+                $("#infox").html("Current X: " + current_x);
+                $("#infoy").html("Current Y: " + current_y);
+                $("#infoz").html("Current Z: " + current_z);
+            })
+        },250); //position checker for fisnar
+        document.onkeyup = function(e) {
+            switch (e.keyCode) {
+                case 13: //enter
+                    value = $("#fisCOM").val()
+                    $.get(fisnar_write + value)
+                    prevsend.push(" " + value)
+                    $("#prevsend").html("Previously sent: " + prevsend)
+                    document.getElementById("fisCOM").value = ""
+                    break
+                case 17: //control
+                    // use this case for the ultimus toggle
+                    break
+                case 33: //page up
+                    if (current_z > 5) {
+                        $.get(fisnar_write + "MZR -5");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Not enough Z.");
+                    break;
+                case 34: //page down
+                    if (current_z < 45) {
+                        $.get(fisnar_write + "MZR 5");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Too much Z.");
+                    break
+                case 35: //end
+                    $.get(fisnar_write + "ST")
+                    break
+                case 36: //home
+                    $.get(fisnar_write + "MA 100,100,25")
+                    break
+                case 37: //left
+                    if (current_x > 10) {
+                        $.get(fisnar_write + "MXR -10");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Not enough X.");
+                    break;
+                case 38: //up
+                    if (current_y < 190) {
+                        $.get(fisnar_write + "MYR 10");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Too much Y.");
+                    break;
+                case 39: //right
+                    if (current_x < 190) {
+                        $.get(fisnar_write + "MXR 10");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Too much X.");
+                    break;
+                case 40: //down
+                    if (current_y > 10) {
+                        $.get(fisnar_write + "MYR -10");
+                        $("#test").html("Just keep swimming.");
+                    }
+                    else $("#test").html("Not enough Y.");
+                    break;
+                case 45: //INS
+                    $.get(fisnar_write + "SP 10");
+                    break;
+                case 46: //DEL
+                    $.get(fisnar_write + "SP 50");
+                    break;
+                    
             }
-        )
-
-
-        setInterval(
-                function() {
-
-                    $.get(fisnar_write+"PX",
-                          function(data)
-                          {
-                        console.log(data)
-
-                    $.get(fisnar_read,
-                        function(data) {
-                        data=data.split("\n")
-                        l = data.length
-                        out = ""
-                        for (i = l-4;i<l;i++) out+=data[i]
-                        $("#information").html(out)})
-                        })},1000)
-
+        }; //keyboard controls
+        
     </script>
 
 </body>
-
-
 </html>
